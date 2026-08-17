@@ -6,24 +6,23 @@ async def get_menu():
     async with aiohttp.ClientSession() as session:
         async with session.get(f"{API_URL}/menu") as resp:
             if resp.status != 200:
+                print("MENU ERROR:", resp.status)
                 return []
+
             return await resp.json()
 
 
 async def get_menu_item(item_id: int):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"{API_URL}/menu") as resp:
-            if resp.status != 200:
-                print("MENU ERROR:", await resp.text())
-                return None
+    # Backendda /menu/{id} yo'q,
+    # shuning uchun /menu dan olib ID bo'yicha topamiz
+    items = await get_menu()
 
-            items = await resp.json()
+    for item in items:
+        if item["id"] == item_id:
+            return item
 
-            for item in items:
-                if item["id"] == item_id:
-                    return item
-
-            return None
+    print("ITEM TOPILMADI:", item_id)
+    return None
 
 
 async def create_order(
