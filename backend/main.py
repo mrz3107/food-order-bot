@@ -1,65 +1,56 @@
-from fastapi import FastAPI, HTTPException
+@router.message(F.text == "🛒 Savat")
+async def show_cart(message: Message):
+    user_id = message.from_user.id
+    cart = carts.get(user_id, {})
 
+    if not cart:
+        await message.answer(
+            "Savatingiz bo'sh. Avval menyudan taom tanlang 🍽"
+        )
+        return
 
-app = FastAPI(title="Food Order API")
+    # API dan butun menyuni olamiz
+    items = await get_menu()
 
+    if not items:
+        await message.answer("❌ Menyuni olishda xatolik.")
+        return
 
-MENU = [
-    {
-        "id": 1,
-        "name": "Burger",
-        "description": "Mol go'shtli mazali burger",
-        "price": 25000,
-        "available": True
-    },
-    {
-        "id": 2,
-        "name": "Pizza",
-        "description": "Pishloqli va mazali pizza",
-        "price": 45000,
-        "available": True
-    },
-    {
-        "id": 3,
-        "name": "Lavash",
-        "description": "Tovuqli lavash",
-        "price": 30000,
-        "available": True
-    },
-    {
-        "id": 4,
-        "name": "Fri",
-        "description": "Qarsildoq kartoshka fri",
-        "price": 15000,
-        "available": True
-    },
-    {
-        "id": 5,
-        "name": "Coca Cola",
-        "description": "Sovuq ichimlik",
-        "price": 10000,
-        "available": True
+    # ID bo'yicha mahsulotlarni topish uchun
+    menu_dict = {
+        int(item["id"]): item
+        for item in items
     }
-]
 
+    lines = []
+    total = 0
 
-@app.get("/")
-def home():
-    return {"message": "Food Order API ishlayapti!"}
+    for item_id, qty in cart.items():
+        item = menu_dict.get(int(item_id))
 
+        if not item:
+            continue
 
-@app.get("/menu")
-def get_menu():
-    return MENU
+        subtotal = item["price"] * qty
+        total += subtotal
 
+        lines.append(
+            f"🍽 {item['name']} x{qty} = {subtotal:,.0f} so'm"
+        )
 
-@app.get("/menu/{item_id}")
-def get_menu_item(item_id: int):
-    for item in MENU:
-        if item["id"] == item_id:
-            return item
+    if not lines:
+        await message.answer(
+            "❌ Savatdagi mahsulotlarni topib bo'lmadi."
+        )
+        return
 
-    raise HTTPException(
-        status_code=404,
-        detail="Mahsulot topilmadi"
+    text = (
+        "🛒 Sizning savatingiz:\n\n"
+        + "\n".join(lines)
+        + f"\n\n💵 Jami: {total:,.0f} so'm"
+    )
+
+    await message.answer(
+        text,
+        reply_markup=cart_kb()
     )
