@@ -3,25 +3,31 @@ from config import API_URL
 
 
 async def get_menu():
+    print("API URL:", API_URL)
+
     async with aiohttp.ClientSession() as session:
         async with session.get(f"{API_URL}/menu") as resp:
-            if resp.status != 200:
-                print("MENU ERROR:", resp.status)
-                return []
+            print("MENU STATUS:", resp.status)
 
-            return await resp.json()
+            data = await resp.json()
+            print("MENU DATA:", data)
+
+            return data
 
 
 async def get_menu_item(item_id: int):
-    # Backendda /menu/{id} yo'q,
-    # shuning uchun /menu dan olib ID bo'yicha topamiz
+    print("QIDIRILAYOTGAN ID:", item_id)
+
     items = await get_menu()
 
     for item in items:
-        if item["id"] == item_id:
+        print("TEKSHIRILDI:", item["id"])
+
+        if int(item["id"]) == int(item_id):
+            print("TOPILDI:", item)
             return item
 
-    print("ITEM TOPILMADI:", item_id)
+    print("❌ ITEM TOPILMADI:", item_id)
     return None
 
 
