@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI(title="Food Order API")
 
@@ -47,3 +47,17 @@ def get_menu():
             "available": True
         }
     ]
+
+
+@app.get("/menu/{item_id}")
+def get_menu_item(item_id: int):
+    menu = get_menu()
+
+    for item in menu:
+        if item["id"] == item_id:
+            return item
+
+    raise HTTPException(
+        status_code=404,
+        detail="Menu item topilmadi"
+    )
