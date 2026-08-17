@@ -27,7 +27,6 @@ carts: dict[int, dict[int, int]] = {}
 
 user_orders: dict[int, list[int]] = {}
 
-
 class OrderForm(StatesGroup):
     name = State()
     phone = State()
