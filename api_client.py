@@ -13,8 +13,6 @@ async def get_menu():
 async def get_menu_item(item_id: int):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"{API_URL}/menu") as resp:
-            print("MENU STATUS:", resp.status)
-
             if resp.status != 200:
                 print("MENU ERROR:", await resp.text())
                 return None
