@@ -322,6 +322,18 @@ async def confirm_order(
 ):
     data = await state.get_data()
 
+    # Ma'lumotlar borligini tekshirish
+    if not data.get("name") or not data.get("phone") or not data.get("address"):
+        await callback.answer(
+            "❌ Buyurtma ma'lumotlari to'liq emas!",
+            show_alert=True,
+        )
+        await state.clear()
+        await callback.message.answer(
+            "Buyurtmani boshidan boshlang: 🛒 Savat → ✅ Buyurtma berish"
+        )
+        return
+
     user_id = callback.from_user.id
     cart = carts.get(user_id, {})
 
@@ -330,10 +342,52 @@ async def confirm_order(
             "Savat bo'sh!",
             show_alert=True,
         )
-
         await state.clear()
         return
 
+    items_payload = [
+        {
+            "menu_item_id": item_id,
+            "quantity": qty,
+        }
+        for item_id, qty in cart.items()
+    ]
+
+    status, result = await create_order(
+        customer_name=data["name"],
+        customer_phone=data["phone"],
+        address=data["address"],
+        items=items_payload,
+    )
+
+    await callback.answer()
+
+    if status != 201:
+        error = result.get("error", "Noma'lum xato")
+
+        await callback.message.answer(
+            f"❌ Buyurtma berishda xatolik:\n{error}"
+        )
+        return
+
+    order_id = result["id"]
+
+    user_orders.setdefault(user_id, []).append(order_id)
+
+    # Savatni tozalash
+    carts[user_id] = {}
+
+    await callback.message.answer(
+        f"✅ Buyurtmangiz qabul qilindi!\n\n"
+        f"🆔 Buyurtma raqami: #{order_id}\n"
+        f"💵 Jami: {result['total_price']:,.0f} so'm\n"
+        f"📦 Holati: {result['status']}\n\n"
+        f"Holatni tekshirish uchun:\n"
+        f"/order_{order_id}",
+        reply_markup=main_menu_kb(),
+    )
+
+    await state.clear()
     items_payload = [
         {
             "menu_item_id": item_id,
