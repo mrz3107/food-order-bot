@@ -1,36 +1,3 @@
-import aiohttp
-from config import API_URL
-
-
-async def get_menu():
-    print("API URL:", API_URL)
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"{API_URL}/menu") as resp:
-            print("MENU STATUS:", resp.status)
-
-            data = await resp.json()
-            print("MENU DATA:", data)
-
-            return data
-
-
-async def get_menu_item(item_id: int):
-    print("QIDIRILAYOTGAN ID:", item_id)
-
-    items = await get_menu()
-
-    for item in items:
-        print("TEKSHIRILDI:", item["id"])
-
-        if int(item["id"]) == int(item_id):
-            print("TOPILDI:", item)
-            return item
-
-    print("❌ ITEM TOPILMADI:", item_id)
-    return None
-
-
 async def create_order(
     customer_name: str,
     customer_phone: str,
@@ -44,21 +11,24 @@ async def create_order(
         "items": items,
     }
 
+    print("ORDER URL:", f"{API_URL}/orders")
+    print("ORDER PAYLOAD:", payload)
+
     async with aiohttp.ClientSession() as session:
         async with session.post(
             f"{API_URL}/orders",
             json=payload
         ) as resp:
-            data = await resp.json()
+
+            print("ORDER STATUS:", resp.status)
+
+            text = await resp.text()
+
+            print("ORDER RESPONSE:", text)
+
+            try:
+                data = await resp.json()
+            except Exception:
+                data = {"error": text}
+
             return resp.status, data
-
-
-async def get_order(order_id: int):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"{API_URL}/orders/{order_id}"
-        ) as resp:
-            if resp.status != 200:
-                return None
-
-            return await resp.json()
