@@ -13,8 +13,12 @@ async def get_menu():
 async def get_menu_item(item_id: int):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"{API_URL}/menu/{item_id}") as resp:
+            print("MENU ITEM STATUS:", resp.status)
+
             if resp.status != 200:
+                print("MENU ITEM ERROR:", await resp.text())
                 return None
+
             return await resp.json()
 
 
@@ -47,4 +51,5 @@ async def get_order(order_id: int):
         ) as resp:
             if resp.status != 200:
                 return None
+
             return await resp.json()
